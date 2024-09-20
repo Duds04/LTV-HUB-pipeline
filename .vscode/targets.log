@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri Sep 20 13:17:05 2024
+# Make data base, printed on Fri Sep 20 15:32:25 2024
 
 # Variables
 
@@ -20,7 +20,6 @@ GJS_DEBUG_OUTPUT = stderr
 VSCODE_CRASH_REPORTER_PROCESS_TYPE = extensionHost
 # environment
 VSCODE_CWD = /home/duda
- 
 # environment
 GDM_LANG = pt_BR
 # default
@@ -86,13 +85,13 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 7909
+VSCODE_PID = 3442
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/duda-Inspiron-7472:@/tmp/.ICE-unix/1462,unix/duda-Inspiron-7472:/tmp/.ICE-unix/1462
+SESSION_MANAGER = local/duda-Inspiron-7472:@/tmp/.ICE-unix/1452,unix/duda-Inspiron-7472:/tmp/.ICE-unix/1452
 # automatic
 *F = $(notdir $*)
 # environment
@@ -164,7 +163,7 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 7909
+GIO_LAUNCHED_DESKTOP_FILE_PID = 3442
 # environment
 _ = /usr/share/code/code
 # environment
@@ -204,9 +203,9 @@ GDMSESSION = cinnamon
 
 # Directories
 
-# . (device 2066, inode 32256424): 9 files, no impossibilities.
+# . (device 2066, inode 32256424): 10 files, no impossibilities.
 
-# 9 files, no impossibilities in 1 directories.
+# 10 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -240,7 +239,6 @@ all: run test
 run:
 #  Implicit rule search has not been done.
 #  Implicit/static pattern stem: ''
- 
 #  File does not exist.
 #  File has been updated.
 #  Needs to be updated (-q is set).
@@ -295,12 +293,13 @@ makefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 17 / storage = 130 B / avg = 7 B
-# current buf: size = 8162 B / used = 130 B / count = 17 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 18 / storage = 135 B / avg = 7 B
+# current buf: size = 8162 B / used = 135 B / count = 18 / avg = 7 B
 
-# strcache performance: lookups = 29 / hit rate = 41%
+# strcache performance: lookups = 30 / hit rate = 40%
 # hash-table stats:
-# Load=17/8192=0%, Rehash=0, Collisions=0/29=0%
-# Finished Make data base on Fri Sep 20 13:17:05 2024
+ 
+# Load=18/8192=0%, Rehash=0, Collisions=0/30=0%
+# Finished Make data base on Fri Sep 20 15:32:25 2024
 
  

@@ -7,7 +7,6 @@ import threading
 
 
 class Pipeline:
-
     def __init__(self) -> None:
         self.tasks: dict[str, Task] = {}
 
@@ -37,7 +36,6 @@ class Pipeline:
             if not task.task_out:
                 final.add(task.name)
         return initial, final
-
 
     # Desnecessário, porém mt divertido:
     # Referência: https://github.com/pymc-devs/pymc/blob/10c9330e4c55e7c6c0b79dde47c498cdf637df02/pymc3/model.py#L153

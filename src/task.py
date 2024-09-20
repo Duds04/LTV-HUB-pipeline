@@ -6,12 +6,15 @@ import pandas as pd
 
 
 class Depends:
-    
-    def __init__(self, source: type[Task] | None = None, *, schema: Schema | None = None) -> None:
+    def __init__(
+        self, source: type[Task] | None = None, *, schema: Schema | None = None
+    ) -> None:
         self.source = source or Task
         self.schema = schema
-    
-    def match(self, is_list: bool, sources: list[Task]) -> tuple[pd.DataFrame | list[pd.DataFrame], list[Task]]:
+
+    def match(
+        self, is_list: bool, sources: list[Task]
+    ) -> tuple[pd.DataFrame | list[pd.DataFrame], list[Task]]:
         matched: list[Task] = []
         remaining: list[Task] = []
         for src in sources:
@@ -24,7 +27,6 @@ class Depends:
 
 
 class Task(ABC):
-
     def __init__(self, name: str) -> None:
         self.name = name
         self.task_in: dict[str, Task] = {}
@@ -32,6 +34,7 @@ class Task(ABC):
         self.output: pd.DataFrame | None = None
 
         from src.pipeline import Pipeline
+
         if ctx := Pipeline.get_context():
             ctx.add_task(self)
 
@@ -83,5 +86,3 @@ class Task(ABC):
             case Task():
                 other.associate(self)
         return self
-
-
