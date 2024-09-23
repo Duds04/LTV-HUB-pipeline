@@ -5,32 +5,55 @@ from src.pipeline import Pipeline
 from src.schema import Schema, Field
 from typing import Annotated
 import pandas as pd
-from lifetimes.utils import (
-    calibration_and_holdout_data,
-    summary_data_from_transaction_data,
-)
 
 
 # TO DO: se tem ID, data e valor
 class CsvReadTask(Task):
-    def __init__(self, name: str, fp: str) -> None:
+    def __init__(
+        self,
+        name: str,
+        fp: str,
+        columnID: str = "id",
+        columnDate: str = "dt",
+        columnVal: str = "val",
+    ) -> None:
         super().__init__(name)
         self.fp = Path(fp)
+        self.columnID = columnID
+        self.columnDate = columnDate
+        self.columnVal = columnVal
 
     def on_run(self) -> pd.DataFrame:
         df = pd.read_csv(self.fp)
+        df.rename(
+            columns={self.columnID: "id", self.columnDate: "dt", self.columnVal: "val"},
+            inplace=True,
+        )
+
+        assert "id" in df.columns
+        assert "dt" in df.columns
+        assert "val" in df.columns
+
         if "dt" in df.columns:
             df["dt"] = pd.to_datetime(df["dt"])
+
+        print("Dataframe lido com sucesso", df.info())
         return df
+
+
+from lifetimes.utils import (  # noqa: E402
+    calibration_and_holdout_data,
+    summary_data_from_transaction_data,
+)
 
 
 class RFMTask(Task):
     def __init__(
         self,
         name: str,
-        columnID: str,
-        columnData: str,
-        columnValor: str,
+        columnID: str = "id",
+        columnDate: str = "dt",
+        columnVal: str = "val",
         frequency: str = "W",
         calibrationEnd=None,
         ObservationEnd=None,
@@ -40,8 +63,8 @@ class RFMTask(Task):
         """
         Args:
                 columnID #Nome da coluna onde encontra-se os identificadores
-                columnData  #Nome da coluna onde encontra-se as datas
-                columnValor  #Nome da coluna onde encontra-se os valores monetários
+                columnDate  #Nome da coluna onde encontra-se as datas
+                columnVal  #Nome da coluna onde encontra-se os valores monetários
                 frequency = 'W' #Frequência em que será observado, Ex: "W" - Weeks
                 calibrationEnd = None #Caso queira passar a data do fim do período de calibração
                 ObservationEnd = None #Caso queira passar a data do fim do período de Obsersvação
@@ -50,8 +73,8 @@ class RFMTask(Task):
         """
         super().__init__(name)
         self.columnID = columnID
-        self.columnData = columnData
-        self.columnValor = columnValor
+        self.columnDate = columnDate
+        self.columnVal = columnVal
         self.frequency = frequency
         self.calibrationEnd = calibrationEnd
         self.ObservationEnd = ObservationEnd
@@ -59,20 +82,20 @@ class RFMTask(Task):
         self.apply_calibration_split = apply_calibration_split
 
     def __getPeriodos(
-        self, df: pd.DataFrame, columnData: str, frequency: str, split: float = 0.8
+        self, df: pd.DataFrame, columnDate: str, frequency: str, split: float = 0.8
     ):
         """
         Args:
             name, #Nome da tarefa
             df, #Dataframe do Pandas
-            columnData, #Nome da coluna onde estão as datas
+            columnDate, #Nome da coluna onde estão as datas
             frequency, #Frequência em que será observado, Ex: "W" - Weeks
             split = 0.8 #Porcentagem da divisão dos dados para separar em treino e calibração
         """
-        assert columnData in df.columns
+        assert columnDate in df.columns
 
-        firstData = df[columnData].sort_values().values[0]
-        lastData = df[columnData].sort_values().values[-1]
+        firstData = df[columnDate].sort_values().values[0]
+        lastData = df[columnDate].sort_values().values[-1]
         rangeDatas = pd.date_range(start=firstData, end=lastData, freq=frequency)
         indexCut = round(len(rangeDatas) * split)
         return rangeDatas[indexCut], lastData
@@ -80,28 +103,41 @@ class RFMTask(Task):
     def on_run(self, df: pd.DataFrame) -> pd.DataFrame:
         if self.calibrationEnd is None:
             self.calibrationEnd, self.ObservationEnd = self.__getPeriodos(
-                df, self.columnData, self.frequency, self.split
+                df, self.columnDate, self.frequency, self.split
             )
 
         if self.apply_calibration_split is False:
             return summary_data_from_transaction_data(
                 transactions=df,
                 customer_id_col=self.columnID,
-                datetime_col=self.columnData,
-                monetary_value_col=self.columnValor,
+                datetime_col=self.columnDate,
+                monetary_value_col=self.columnVal,
                 freq=self.frequency,
             )
         else:
             rfm_cal_holdout = calibration_and_holdout_data(
                 transactions=df,
                 customer_id_col=self.columnID,
-                datetime_col=self.columnData,
-                monetary_value_col=self.columnValor,
+                datetime_col=self.columnDate,
+                monetary_value_col=self.columnVal,
                 freq=self.frequency,
                 calibration_period_end=self.calibrationEnd,
                 observation_period_end=self.ObservationEnd,
             )
             return rfm_cal_holdout
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_percentage_error,
+    mean_absolute_error,
+)
+
+
+class TransactionModelTask(Task):
+    def __init__(self, name: str):
+        pass
 
 
 # class AgeTransformerTask(Transformer):
@@ -224,9 +260,9 @@ read_dt --.---> avg_jan -->--.----´
 def main():
     with Pipeline() as pipeline:
         # read_base = CsvReadTask("read_base", "data.csv")
-        read_dt = CsvReadTask("read_dt", "data/transactions.csv")
+        read_dt = CsvReadTask("read_dt", "data/transactions.csv", "customer_id", "date", "amount")
         # read_transaction = CsvReadTask("read_dt", "data/transactions.csv")
-        rfm_data = RFMTask("split_data", "customer_id", "date", "amount")
+        rfm_data = RFMTask("split_data")
 
         # square = SquareTransformerTask("square")
         # avg_jan = AvgTransformerTask("avg_jan", 1)
