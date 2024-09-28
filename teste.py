@@ -404,15 +404,6 @@ def main():
         pareto_model = ParetoModelTask("pareto_model", isRating=True)
         bgf_model = BGFTask("bgf_model", isRating=True)
 
-        # square = SquareTransformerTask("square")
-        # avg_jan = AvgTransformerTask("avg_jan", 1)
-        # avg_mar = AvgTransformerTask("avg_mar", 3)
-        # age = AgeTransformerTask("age")
-
-        # predict = FakeModelTask("predict")
-
-        # read_base >> square >> predict
-        # read_dt >> [avg_jan, avg_mar, age] >> predict
 
         read_dt >> rfm_data >> pareto_model
         read_dt >> rfm_data >> bgf_model
