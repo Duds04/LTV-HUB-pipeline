@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Mon Sep 23 16:08:03 2024
+# Make data base, printed on Sat Sep 28 15:00:31 2024
 
 # Variables
 
@@ -61,9 +61,11 @@ MAKEFLAGS = pqrR
 # makefile
 CURDIR := /home/duda/Documentos/IC/Reestruturar Back/LTV-HUB-pipeline
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
 # environment
 LESSOPEN = | /usr/bin/lesspipe %s
+# environment
+VSCODE_L10N_BUNDLE_LOCATION = file:///home/duda/.vscode/extensions/ms-ceintl.vscode-language-pack-pt-br-1.93.2024091109/translations/extensions/vscode.json-language-features.i18n.json
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -83,13 +85,13 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 2580
+VSCODE_PID = 2735
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/duda-Inspiron-7472:@/tmp/.ICE-unix/1507,unix/duda-Inspiron-7472:/tmp/.ICE-unix/1507
+SESSION_MANAGER = local/duda-Inspiron-7472:@/tmp/.ICE-unix/1459,unix/duda-Inspiron-7472:/tmp/.ICE-unix/1459
 # automatic
 *F = $(notdir $*)
 # environment
@@ -161,7 +163,7 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2580
+GIO_LAUNCHED_DESKTOP_FILE_PID = 2735
 # environment
 _ = /usr/share/code/code
 # environment
@@ -195,7 +197,7 @@ XDG_GREETER_DATA_DIR = /var/lib/lightdm-data/duda
 # environment
 GDMSESSION = cinnamon
 # variable set hash-table stats:
-# Load=92/1024=9%, Rehash=0, Collisions=3/125=2%
+# Load=93/1024=9%, Rehash=0, Collisions=4/126=3%
 
 # Pattern-specific Variable Values
 
@@ -278,7 +280,6 @@ makefile:
 #  Last modified 2024-09-20 12:58:41.247142149
 #  File has been updated.
 #  Successfully updated.
- 
 
 # Not a target:
 .SUFFIXES:
@@ -289,6 +290,7 @@ makefile:
 # files hash-table stats:
 # Load=7/1024=1%, Rehash=0, Collisions=0/23=0%
 # VPATH Search Paths
+ 
 
 # No 'vpath' search paths.
 
@@ -300,6 +302,6 @@ makefile:
 # strcache performance: lookups = 30 / hit rate = 40%
 # hash-table stats:
 # Load=18/8192=0%, Rehash=0, Collisions=0/30=0%
-# Finished Make data base on Mon Sep 23 16:08:03 2024
+# Finished Make data base on Sat Sep 28 15:00:31 2024
 
  

@@ -1,5 +1,15 @@
+from lifetimes import BetaGeoFitter
+from lifetimes import ParetoNBDFitter
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_percentage_error,
+    mean_absolute_error,
+)
+from abc import abstractmethod
 from pathlib import Path
 from datetime import datetime
+
+from pandas import DataFrame
 from src.task import Task, Depends
 from src.pipeline import Pipeline
 from src.schema import Schema, Field
@@ -7,7 +17,6 @@ from typing import Annotated
 import pandas as pd
 
 
-# TO DO: se tem ID, data e valor
 class CsvReadTask(Task):
     def __init__(
         self,
@@ -26,7 +35,8 @@ class CsvReadTask(Task):
     def on_run(self) -> pd.DataFrame:
         df = pd.read_csv(self.fp)
         df.rename(
-            columns={self.columnID: "id", self.columnDate: "dt", self.columnVal: "val"},
+            columns={self.columnID: "id",
+                     self.columnDate: "dt", self.columnVal: "val"},
             inplace=True,
         )
 
@@ -37,7 +47,6 @@ class CsvReadTask(Task):
         if "dt" in df.columns:
             df["dt"] = pd.to_datetime(df["dt"])
 
-        print("Dataframe lido com sucesso", df.info())
         return df
 
 
@@ -96,7 +105,8 @@ class RFMTask(Task):
 
         firstData = df[columnDate].sort_values().values[0]
         lastData = df[columnDate].sort_values().values[-1]
-        rangeDatas = pd.date_range(start=firstData, end=lastData, freq=frequency)
+        rangeDatas = pd.date_range(
+            start=firstData, end=lastData, freq=frequency)
         indexCut = round(len(rangeDatas) * split)
         return rangeDatas[indexCut], lastData
 
@@ -127,89 +137,214 @@ class RFMTask(Task):
             return rfm_cal_holdout
 
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    mean_squared_error,
-    mean_absolute_percentage_error,
-    mean_absolute_error,
-)
+from sklearn.model_selection import train_test_split  # noqa: E402
 
 
 class TransactionModelTask(Task):
-    def __init__(self, name: str):
+    def __init__(
+        self,
+        name: str,
+        # dadosRFM: pd.DataFrame,
+        grid=None,
+        isTest: bool = True,
+    ) -> None:
+        """
+        Args:
+            model #Modelo BG/NBD ou de Pareto esperado para realizar a predição
+            rfm #Dataset já processado pelo RFM
+            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            grid = None #Caso não seja para fazer um grid search ele será None
+        """
+        super().__init__(name)
+        self.model = None
+        self.grid = grid
+        self.isTest = isTest
+
+    @abstractmethod
+    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        """
+            Dado um dataset com os valores de RFM, retorna a predição do número de transações esperadas
+        """
         pass
 
+    @abstractmethod
+    def createModel(self, df: pd.DataFrame):
+        pass
 
-# class AgeTransformerTask(Transformer):
+    @abstractmethod
+    def predict(self, df: pd.DataFrame,  numPeriodos: float = 180) -> pd.DataFrame:
+        """
+            Dado um período, retorna o número de transações esperadas até ele
+        Args:
+            numPeriodos = 180 #Numero de períodos em dia para que deseja efetuar a predição
+        """
+        if self.isTest:
+            # No período de Treino e no periodo de Validação
+            return self.model.conditional_expected_number_of_purchases_up_to_time(
+                numPeriodos,
+                df["frequency_cal"].values,
+                df["recency_cal"].values,
+                df["T_cal"].values,
+            )
+        # Prever dados futuros, com todo o dataset
+        return self.model.conditional_expected_number_of_purchases_up_to_time(
+            numPeriodos,
+            df["frequency"].values,
+            df["recency"].values,
+            df["T"].values
+        )
 
-#     def on_run(self, df: pd.DataFrame) -> pd.DataFrame:
-#         assert "id" in df.columns
-#         assert "dt" in df.columns
+    @abstractmethod
+    def fit(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            Treina o modelo com os dados passados
+        """
+        pass
 
-#         # age in days
-#         return (
-#             df.groupby("id")
-#             .aggregate({"dt": ["min", "max"]})["dt"]
-#             .reset_index()
-#             .assign(age=lambda df: (df["max"] - df["min"]).dt.days)[["id", "age"]]
-#         )
+    # TO DO: Esse método tá calculando errado
 
-
-# class AvgTransformerTask(Transformer):
-
-#     def __init__(self, name: str, month: int) -> None:
-#         super().__init__(name)
-#         self.month = month
-
-#     def on_run(
-#         self,
-#         df: Annotated[
-#             pd.DataFrame,
-#             Depends(
-#                 schema=Schema(
-#                     [Field("id", int), Field("dt", datetime), Field("val", float)]
-#                 )
-#             ),
-#         ],
-#     ) -> pd.DataFrame:
-#         assert "id" in df.columns
-#         assert "dt" in df.columns
-#         assert "val" in df.columns
-#         return (
-#             df[df["dt"].dt.month == self.month]
-#             .groupby("id")["val"]
-#             .mean()
-#             .reset_index()
-#             .rename({"val": f"val_m{self.month}"}, axis=1)
-#         )
-
-
-# class SquareTransformerTask(Transformer):
-
-#     def on_run(
-#         self, df: Annotated[pd.DataFrame, Depends(schema=Schema([Field("id", int)]))]
-#     ) -> pd.DataFrame:
-#         cols = (c for c in df.columns if c != "id")
-#         transformed = {c: df[c].apply(lambda x: x**2) for c in cols}
-#         return df.assign(**transformed)
+    @abstractmethod
+    def rating(self, nameModel: str, df: pd.DataFrame, xExpected: str, xReal: str = 'frequency_holdout') -> pd.DataFrame:
+        """
+            Retorna a classificação do cliente
+        """
+        print("Model ", nameModel,"Mean Squared Error:",
+              mean_squared_error(df[xReal], df[xExpected]))
 
 
-# class FakeModelTask(Task):
+class ParetoModelTask(TransactionModelTask):
+    def __init__(
+        self,
+        name: str,
+        # grid = None,
+        isTest: bool = True,
+        penalizer: float = 0.1,
+        isRating: bool = False
+    ) -> None:
+        """
+        Args:
+            name, #Nome da tarefa
+            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            penalizer = 0.1# Coeficiente de penalização usado pelo modelo
+        """
+        super().__init__(name,  isTest)
+        self.penalizer = penalizer
+        self.isTest = isTest
+        self.isRating = isRating
+        self.model = self.createModel()
 
-#     def on_run(
-#         self,
-#         base_df: Annotated[pd.DataFrame, Depends(SquareTransformerTask)],
-#         extra_dfs: Annotated[list[pd.DataFrame], Depends(Transformer)],
-#     ) -> pd.DataFrame:
-#         for df in extra_dfs:
-#             base_df = base_df.merge(df, how="outer", on="id")
-#         inputs = sum(
-#             base_df[c].fillna(0) for c in base_df.columns if c.startswith("val")
-#         )
-#         return base_df.assign(predicted=inputs / base_df["age"])
+    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        self.fit(dfRFM)
+        dfRFM['ExpectedPareto'] = self.predict(
+            dfRFM, dfRFM['duration_holdout'].iloc[0])
+
+        dfRFM['ExpectedBGF'] = self.predict(
+            dfRFM, dfRFM['duration_holdout'].iloc[0])
+
+        if (self.isRating):
+            self.rating(dfRFM)
+        # Real Expected --> na verdade isso é só a coluna frequency_holdout
+        return dfRFM
+
+    def createModel(self) -> pd.DataFrame:
+        pareto = ParetoNBDFitter(penalizer_coef=self.penalizer)
+        return pareto
+
+    def fit(self, df: pd.DataFrame):
+        """
+            Treina o modelo com os dados passados
+        """
+        # cal, holdout
+        # cal --> X em momento de treino
+        # holdout --> Y em momento de treino
+        # sem nada é no momento de Teste, momento de previsão, final
+        if self.isTest:
+            self.model.fit(frequency=df['frequency_cal'],
+                           recency=df['recency_cal'],
+                           T=df['T_cal'])
+        else:
+            self.model.fit(frequency=df['frequency'],
+                           recency=df['recency'],
+                           T=df['T'])
+
+        return self.model
+
+    def rating(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            Retorna a classificação do cliente
+        """
+        xExpected = 'ExpectedPareto'
+        super().rating('Pareto', df, xExpected)
+
+    def predict(self, df: pd.DataFrame, numPeriodos: float = 180) -> pd.DataFrame:
+        return super().predict(df, numPeriodos=numPeriodos)
 
 
-# Acabou sendo inutilizado
+class BGFTask(TransactionModelTask):
+    def __init__(
+        self,
+        name: str,
+        # grid = None,
+        isTest: bool = True,
+        penalizer: float = 0.1,
+        isRating: bool = False
+    ) -> None:
+        """
+        Args:
+            name, #Nome da tarefa
+            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            penalizer = 0.1# Coeficiente de penalização usado pelo modelo
+        """
+        super().__init__(name,  isTest)
+        self.penalizer = penalizer
+        self.isTest = isTest
+        self.isRating = isRating
+        self.model = self.createModel()
+
+    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        self.fit(dfRFM)
+        dfRFM['ExpectedBGF'] = self.predict(
+            dfRFM, dfRFM['duration_holdout'].iloc[0])
+        
+        if (self.isRating):
+            self.rating(dfRFM)
+        # Real Expected --> na verdade isso é só a coluna frequency_holdout
+        return dfRFM
+
+    def createModel(self) -> pd.DataFrame:
+        pareto = BetaGeoFitter(penalizer_coef=self.penalizer)
+        return pareto
+
+    def fit(self, df: pd.DataFrame):
+        """
+            Treina o modelo com os dados passados
+        """
+        # cal, holdout
+        # cal --> X em momento de treino
+        # holdout --> Y em momento de treino
+        # sem nada é no momento de Teste, momento de previsão, final
+        if self.isTest:
+            self.model.fit(frequency=df['frequency_cal'],
+                           recency=df['recency_cal'],
+                           T=df['T_cal'])
+        else:
+            self.model.fit(frequency=df['frequency'],
+                           recency=df['recency'],
+                           T=df['T'])
+
+    def rating(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            Retorna a classificação do cliente
+        """
+        xExpected = 'ExpectedBGF'
+        super().rating('BG/NBD', df,  xExpected)
+
+    def predict(self, df: pd.DataFrame, numPeriodos: float = 180) -> pd.DataFrame:
+        return super().predict(df, numPeriodos=numPeriodos)
+
+
+#  @classmethod --> não precisa passar a instancia não usa o self
+
 
 """
 # Pegar dados e dividir em periodos 
@@ -260,9 +395,14 @@ read_dt --.---> avg_jan -->--.----´
 def main():
     with Pipeline() as pipeline:
         # read_base = CsvReadTask("read_base", "data.csv")
-        read_dt = CsvReadTask("read_dt", "data/transactions.csv", "customer_id", "date", "amount")
+        read_dt = CsvReadTask(
+            "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
+        )
         # read_transaction = CsvReadTask("read_dt", "data/transactions.csv")
         rfm_data = RFMTask("split_data")
+
+        pareto_model = ParetoModelTask("pareto_model", isRating=True)
+        bgf_model = BGFTask("bgf_model", isRating=True)
 
         # square = SquareTransformerTask("square")
         # avg_jan = AvgTransformerTask("avg_jan", 1)
@@ -274,7 +414,8 @@ def main():
         # read_base >> square >> predict
         # read_dt >> [avg_jan, avg_mar, age] >> predict
 
-        read_dt >> rfm_data
+        read_dt >> rfm_data >> pareto_model
+        read_dt >> rfm_data >> bgf_model
 
     print(pipeline.run())
 
