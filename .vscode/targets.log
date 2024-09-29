@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat Sep 28 15:00:31 2024
+# Make data base, printed on Sun Sep 29 14:25:14 2024
 
 # Variables
 
@@ -64,8 +64,6 @@ CURDIR := /home/duda/Documentos/IC/Reestruturar Back/LTV-HUB-pipeline
 APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
 # environment
 LESSOPEN = | /usr/bin/lesspipe %s
-# environment
-VSCODE_L10N_BUNDLE_LOCATION = file:///home/duda/.vscode/extensions/ms-ceintl.vscode-language-pack-pt-br-1.93.2024091109/translations/extensions/vscode.json-language-features.i18n.json
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -85,7 +83,7 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 2735
+VSCODE_PID = 80019
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -163,15 +161,13 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2735
+GIO_LAUNCHED_DESKTOP_FILE_PID = 80019
 # environment
 _ = /usr/share/code/code
 # environment
 XDG_RUNTIME_DIR = /run/user/1000
 # environment
 GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
-# environment
-VSCODE_DOTNET_INSTALL_TOOL_ORIGINAL_HOME = /home/duda
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -197,7 +193,7 @@ XDG_GREETER_DATA_DIR = /var/lib/lightdm-data/duda
 # environment
 GDMSESSION = cinnamon
 # variable set hash-table stats:
-# Load=93/1024=9%, Rehash=0, Collisions=4/126=3%
+# Load=91/1024=9%, Rehash=0, Collisions=3/124=2%
 
 # Pattern-specific Variable Values
 
@@ -282,6 +278,7 @@ makefile:
 #  Successfully updated.
 
 # Not a target:
+ 
 .SUFFIXES:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
@@ -290,7 +287,6 @@ makefile:
 # files hash-table stats:
 # Load=7/1024=1%, Rehash=0, Collisions=0/23=0%
 # VPATH Search Paths
- 
 
 # No 'vpath' search paths.
 
@@ -302,6 +298,6 @@ makefile:
 # strcache performance: lookups = 30 / hit rate = 40%
 # hash-table stats:
 # Load=18/8192=0%, Rehash=0, Collisions=0/30=0%
-# Finished Make data base on Sat Sep 28 15:00:31 2024
+# Finished Make data base on Sun Sep 29 14:25:14 2024
 
  
