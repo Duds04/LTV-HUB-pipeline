@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Wed Oct  2 18:22:59 2024
+# Make data base, printed on Wed Oct  2 19:06:08 2024
 
 # Variables
 
@@ -40,6 +40,8 @@ PWD = /home/duda/Documentos/IC/Reestruturar Back/LTV-HUB-pipeline
 %D = $(patsubst %/,%,$(dir $%))
 # environment
 XDG_DATA_DIRS = /usr/share/cinnamon:/usr/share/gnome:/home/duda/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+# environment
+OLDPWD = /home/duda
 # automatic
 ^D = $(patsubst %/,%,$(dir $^))
 # automatic
@@ -85,7 +87,7 @@ MAKEFILE_LIST := makefile
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 2156
+VSCODE_PID = 10591
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
@@ -163,7 +165,7 @@ GTK_MODULES = gail:atk-bridge
 # default
 MAKE_VERSION := 4.3
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 2156
+GIO_LAUNCHED_DESKTOP_FILE_PID = 10591
 # environment
 _ = /usr/share/code/code
 # environment
@@ -195,7 +197,7 @@ XDG_GREETER_DATA_DIR = /var/lib/lightdm-data/duda
 # environment
 GDMSESSION = cinnamon
 # variable set hash-table stats:
-# Load=92/1024=9%, Rehash=0, Collisions=4/125=3%
+# Load=93/1024=9%, Rehash=0, Collisions=4/126=3%
 
 # Pattern-specific Variable Values
 
@@ -203,9 +205,9 @@ GDMSESSION = cinnamon
 
 # Directories
 
-# . (device 2066, inode 32256424): 10 files, no impossibilities.
+# . (device 2066, inode 32256424): 9 files, no impossibilities.
 
-# 10 files, no impossibilities in 1 directories.
+# 9 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -217,7 +219,7 @@ clean:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
-#  recipe to execute (from 'makefile', line 12):
+#  recipe to execute (from 'makefile', line 8):
 	@echo "Limpando arquivos temporários..."
 	clear
 
@@ -227,7 +229,7 @@ clean:
 #  Modification time never checked.
 #  File has not been updated.
 
-all: run test
+all: run
 #  Command line target.
 #  Implicit rule search has been done.
 #  File does not exist.
@@ -264,18 +266,10 @@ run:
 	@echo "Executando main.py..."
 	python3 main.py
 
-test:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
-#  recipe to execute (from 'makefile', line 8):
-	@echo "Executando teste.py..."
-	python3 teste.py
-
 # Not a target:
 makefile:
 #  Implicit rule search has been done.
-#  Last modified 2024-10-02 18:09:32.769511179
+#  Last modified 2024-10-02 19:00:31.992040613
 #  File has been updated.
 #  Successfully updated.
 
@@ -284,22 +278,22 @@ makefile:
 #  Implicit rule search has not been done.
 #  Modification time never checked.
 #  File has not been updated.
+ 
 
 # files hash-table stats:
-# Load=7/1024=1%, Rehash=0, Collisions=0/23=0%
+# Load=6/1024=1%, Rehash=0, Collisions=0/20=0%
 # VPATH Search Paths
 
 # No 'vpath' search paths.
 
 # No general ('VPATH' variable) search path.
- 
 
-# strcache buffers: 1 (0) / strings = 18 / storage = 135 B / avg = 7 B
-# current buf: size = 8162 B / used = 135 B / count = 18 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 16 / storage = 121 B / avg = 7 B
+# current buf: size = 8162 B / used = 121 B / count = 16 / avg = 7 B
 
-# strcache performance: lookups = 30 / hit rate = 40%
+# strcache performance: lookups = 26 / hit rate = 38%
 # hash-table stats:
-# Load=18/8192=0%, Rehash=0, Collisions=0/30=0%
-# Finished Make data base on Wed Oct  2 18:22:59 2024
+# Load=16/8192=0%, Rehash=0, Collisions=0/26=0%
+# Finished Make data base on Wed Oct  2 19:06:08 2024
 
  

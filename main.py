@@ -310,7 +310,6 @@ class BGFTask(TransactionModelTask):
         self.fit(dfRFM)
         dfRFM['ExpectedBGF'] = self.predict(
             dfRFM, dfRFM['duration_holdout'].iloc[0])
-
         if (self.isRating):
             self.rating(dfRFM)
         # Real Expected --> na verdade isso é só a coluna frequency_holdout
@@ -635,6 +634,7 @@ def main():
         # read_dt >> rfm_data >> pareto_model
         # read_dt >> rfm_data >> bgf_model
         read_dt >> rfm_data >> ml_model
+
 
     print(pipeline.run())
 
