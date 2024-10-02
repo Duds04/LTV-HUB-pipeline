@@ -571,52 +571,6 @@ class MachineLearningModel(GenericModelTask):
         return RegressorModel.predict(self.X_test)
 
 
-"""
-# Pegar dados e dividir em periodos 
-class SplitDataPeriodTask(Task):
-    def __init__(self, name: str, columnData: str, frequency: str, split: float = 0.8) -> None:
-        # ""
-        #     Args:
-        #         name, #Nome da tarefa   
-        #         df, #Dataframe do Pandas 
-        #         columnData, #Nome da coluna onde estão as datas
-        #         frequency, #Frequência em que será observado, Ex: "W" - Weeks
-        #         split = 0.8 #Porcentagem da divisão dos dados para separar em treino e calibração
-        # ""
-        
-        super().__init__(name)
-        self.columnData = columnData
-        self.frequency = frequency
-        self.split = split
-
-    def on_run(self, df: pd.DataFrame) -> tuple:
-        
-        # Metodo privado
-        # Manter esse metodo para o caso de ter mais um tipo de metodo de divisão futuramente
-
-        assert self.columnData in df.columns
-        
-        
-        firstData = df[self.columnData].sort_values().values[0]
-        lastData = df[self.columnData].sort_values().values[-1]
-        rangeDatas = pd.date_range(start=firstData,end=lastData,freq=self.frequency)
-        indexCut = round(len(rangeDatas) * self.split)
-        return rangeDatas[indexCut],lastData
-"""
-
-"""
-Pipeline:
-
-read_base ----> square -----------.---> predict
-                                  |
-read_dt --.---> avg_jan -->--.----´
-          |                  |
-          `---> avg_mar -->--´
-          |                  |
-          `---> age ------>--´
-"""
-
-
 def main():
     with Pipeline() as pipeline:
         read_dt = CsvReadTask(
