@@ -1,3 +1,4 @@
+from lifetimes import GammaGammaFitter
 import numpy as np
 import xgboost as xgb
 import lightgbm as lgb
@@ -20,6 +21,8 @@ from src.pipeline import Pipeline
 from src.schema import Schema, Field
 from typing import Annotated
 import pandas as pd
+
+# TO DO: Esse método tá calculando errado corrijir comentarios de tasks (os args)
 
 
 class CsvReadTask(Task):
@@ -65,6 +68,7 @@ class RFMTask(Task):
     def __init__(
         self,
         name: str,
+        # filler_periods_interval = None,
         columnID: str = "id",
         columnDate: str = "dt",
         columnVal: str = "val",
@@ -76,6 +80,7 @@ class RFMTask(Task):
     ) -> None:
         """
         Args:
+                filler_periods_interval # Vetor armazenando quais periodos usados para o split
                 columnID #Nome da coluna onde encontra-se os identificadores
                 columnDate  #Nome da coluna onde encontra-se as datas
                 columnVal  #Nome da coluna onde encontra-se os valores monetários
@@ -83,7 +88,8 @@ class RFMTask(Task):
                 calibrationEnd = None #Caso queira passar a data do fim do período de calibração
                 ObservationEnd = None #Caso queira passar a data do fim do período de Obsersvação
                 split = 0.8 # Porcentagem da divisão dos dados para separar em Obsersvação e calibração
-                is_calibration_mode = True #Verdadeiro caso queira separar os dados em Obsersvação e calibração
+                #Verdadeiro caso queira separar os dados em Obsersvação e calibração
+                is_calibration_mode = True
         """
         super().__init__(name)
         self.columnID = columnID
@@ -94,6 +100,7 @@ class RFMTask(Task):
         self.ObservationEnd = ObservationEnd
         self.split = split
         self.apply_calibration_split = apply_calibration_split
+        # self.filler_periods_interval = filler_periods_interval
 
     def __getPeriodos(
         self, df: pd.DataFrame, columnDate: str, frequency: str, split: float = 0.8
@@ -115,31 +122,44 @@ class RFMTask(Task):
         indexCut = round(len(rangeDatas) * split)
         return rangeDatas[indexCut], lastData
 
-    def on_run(self, df: pd.DataFrame) -> pd.DataFrame:
-        if self.calibrationEnd is None:
-            self.calibrationEnd, self.ObservationEnd = self.__getPeriodos(
-                df, self.columnDate, self.frequency, self.split
-            )
+    def __rfm_data_filler(self, df: pd.DataFrame, split: float = 0.8) -> pd.DataFrame:
+            if self.calibrationEnd is None:
+                calibrationEnd, ObservationEnd = self.__getPeriodos(
+                    df, self.columnDate, self.frequency, split
+                )
 
-        if self.apply_calibration_split is False:
-            return summary_data_from_transaction_data(
-                transactions=df,
-                customer_id_col=self.columnID,
-                datetime_col=self.columnDate,
-                monetary_value_col=self.columnVal,
-                freq=self.frequency,
-            )
-        else:
-            rfm_cal_holdout = calibration_and_holdout_data(
-                transactions=df,
-                customer_id_col=self.columnID,
-                datetime_col=self.columnDate,
-                monetary_value_col=self.columnVal,
-                freq=self.frequency,
-                calibration_period_end=self.calibrationEnd,
-                observation_period_end=self.ObservationEnd,
-            )
+            if self.apply_calibration_split is False:
+                return summary_data_from_transaction_data(
+                    transactions=df,
+                    customer_id_col=self.columnID,
+                    datetime_col=self.columnDate,
+                    monetary_value_col=self.columnVal,
+                    freq=self.frequency,
+                )
+            else:
+                rfm_cal_holdout = calibration_and_holdout_data(
+                    transactions=df,
+                    customer_id_col=self.columnID,
+                    datetime_col=self.columnDate,
+                    monetary_value_col=self.columnVal,
+                    freq=self.frequency,
+                    calibration_period_end= calibrationEnd,
+                    observation_period_end= ObservationEnd,
+                )
             return rfm_cal_holdout
+
+    def on_run(self, df: pd.DataFrame) -> pd.DataFrame:
+        
+        # if self.filler_periods_interval == None:
+        df2 = self.__rfm_data_filler(df)
+        # else:
+        #     df2 = self.__rfm_data_filler(df, split = self.filler_periods_interval[0])
+        #     for i in self.filler_periods_interval[1:-1]:
+        #         df1 = self.__rfm_data_filler(df, split = i)
+        #         df2 = df2._append(df1)
+
+        return df2
+           
 
 
 from sklearn.model_selection import GridSearchCV, train_test_split  # noqa: E402
@@ -359,8 +379,7 @@ class GenericModelTask(Task):
     ) -> None:
         """
         Args:
-            model # Modelo BG/NBD ou de Pareto esperado para realizar a predição
-            rfm # Dataset já processado pelo RFM
+            target: str, # Nome da coluna onde está o valor alvo (Y)
             isTest = True # Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             isTunning = None # Fazer o Tunning de hyperparâmetros se for True
         """
@@ -434,11 +453,10 @@ class MachineLearningModel(GenericModelTask):
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(
             X.values, np.ravel(Y.values), random_state=42)
 
-
         self.bestModel = self.selectBestModel()
 
         dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Colunms])
-
+        
         return dfRFM
 
     def selectBestModel(self):
@@ -536,7 +554,8 @@ class MachineLearningModel(GenericModelTask):
             HGBoost = self.apply_grid_search(
                 HistGradientBoostingRegressor(), 'hist_gradient_boosting')
             model_xgb = self.apply_grid_search(xgb.XGBRegressor(), 'xgboost')
-            model_lgb = self.apply_grid_search(lgb.LGBMRegressor(), 'lgbm', verbose=-1)
+            model_lgb = self.apply_grid_search(
+                lgb.LGBMRegressor(), 'lgbm', verbose=-1)
 
         models = [lasso, Enet, rf, GBoost, HGBoost, model_xgb, model_lgb]
         return models
@@ -571,25 +590,154 @@ class MachineLearningModel(GenericModelTask):
         return RegressorModel.predict(self.X_test)
 
 
+class MonetaryModelTask(Task):
+    def __init__(
+        self,
+        name: str,
+        isTunning: bool = False,
+        isTest: bool = True,
+    ) -> None:
+        """
+        Args:
+            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+        """
+        super().__init__(name)
+        self.model = None
+        self.isTunning = isTunning
+        self.isTest = isTest
+
+    @abstractmethod
+    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        """
+            Dado um dataset com os valores de RFM, retorna a predição do número de transações esperadas
+        """
+        pass
+
+    @abstractmethod
+    def createModel(self, df: pd.DataFrame):
+        pass
+
+    @abstractmethod
+    def predict(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            Dado um período, retorna o número de transações esperadas até ele
+        """
+        pass
+
+    @abstractmethod
+    def fit(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+            Treina o modelo com os dados passados
+        """
+        pass
+
+    @abstractmethod
+    def rating(self, nameModel: str, df: pd.DataFrame, xExpected: str, xReal: str = 'frequency') -> pd.DataFrame:
+        """
+            Retorna a classificação do cliente
+        """
+        print("Model ", nameModel, "Mean Squared Error:",
+              mean_squared_error(df[xReal], df[xExpected]))
+
+
+class GammaGammaModelTask(MonetaryModelTask):
+    def __init__(
+        self,
+        name: str,
+        isTunning: bool = False,
+        isTest: bool = True,
+        penalizer: float = 0.1,
+        isRating: bool = False
+    ) -> None:
+        """
+        Args:
+            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTunning = None # Fazer o Tunning de hyperparâmetros se for True
+            penalizer = 0.1 # Coeficiente de penalização usado pelo modelo
+        """
+        super().__init__(name, isTunning, isTest)
+        self.penalizer = penalizer
+        self.isTest = isTest
+        self.isRating = isRating
+        self.model = self.createModel()
+
+    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+
+        # onde tem essa coluna???
+        monetary = "monetary_value"
+        frequency = "frequency"
+
+        if self.isTest:
+            monetary = "monetary_value_cal"
+            frequency = "frequency_cal"
+
+        dfRFM = dfRFM[dfRFM[monetary] > 0]
+
+        # print(dfRFM[monetary].values())
+
+        self.fit(dfRFM, monetary, frequency)
+
+        dfRFM['ExpectedGammaGamma'] = self.predict(dfRFM, monetary, frequency)
+
+        if (self.isRating):
+            self.rating(dfRFM, frequency)
+
+        return dfRFM
+
+    def createModel(self) -> pd.DataFrame:
+        gamma = GammaGammaFitter(penalizer_coef=self.penalizer)
+        return gamma
+
+    def fit(self, df: pd.DataFrame, monetary: str, frequency: str) -> pd.DataFrame:
+        """
+            Treina o modelo com os dados passados
+        """
+        self.model.fit(df[frequency], df[monetary])
+        return self.model
+
+    def predict(self, df: pd.DataFrame, monetary: str, frequency: str) -> pd.DataFrame:
+        """
+            Dado um período, retorna o número de transações esperadas até ele
+        """
+        return self.model.conditional_expected_average_profit(df[frequency], df[monetary])
+
+    def rating(self, df: pd.DataFrame, frequency: str) -> pd.DataFrame:
+        """
+            Retorna a classificação do cliente
+        """
+        xExpected = 'ExpectedGammaGamma'
+        super().rating('GammaGamma', df, xExpected, xReal=frequency)
+
+
 def main():
     with Pipeline() as pipeline:
         read_dt = CsvReadTask(
             "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
         )
         rfm_data = RFMTask("split_data")
+        
 
         # NÃO CRIAR ESSES MODELOS DENTRO DO PIPELINE SE NÃO FOR COLOCAR AS DEPENDÊNCIAS
         # pareto_model = ParetoModelTask("pareto_model", isRating=True)
         # bgf_model = BGFTask("bgf_model", isRating=True)
 
-        ml_model = MachineLearningModel("machine_learning_model", "frequency_holdout", X_Colunms=[
-                                        'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
+        # ml_model_transaction = MachineLearningModel("machine_learning_model_transaction", "frequency_holdout", X_Colunms=[
+        #                                 'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
 
+        # gammaGamma_model = GammaGammaModelTask("gammaGamma_model", isRating=True)
+
+
+        # TO DO: Refatorar o esquema de preencher o dataSet atravês dos intervalos (# rfm_data = RFMTask("split_data",  [i/20 for i in range(11,17)]))
+        ml_model_monetary = MachineLearningModel("machine_learning_monetary", "monetary_value_holdout", X_Colunms=[
+                                                 'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
+
+        # read_dt >> rfm_data
         # read_dt >> rfm_data >> pareto_model
         # read_dt >> rfm_data >> bgf_model
-        read_dt >> rfm_data >> ml_model
-
-
+        # read_dt >> rfm_data >> ml_model
+        # read_dt >> rfm_data >> gammaGamma_model
+        read_dt >> rfm_data >> ml_model_monetary
+        
     print(pipeline.run())
 
 
