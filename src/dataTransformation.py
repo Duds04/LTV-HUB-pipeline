@@ -1,5 +1,5 @@
 
-from src.task import Task
+from src.workflows.task import Task
 import pandas as pd
 from lifetimes.utils import (  # noqa: E402
     calibration_and_holdout_data,

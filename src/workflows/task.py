@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from src.schema import Schema
+from src.workflows.schema import Schema
 from typing import Annotated, get_type_hints, get_origin, get_args
 import pandas as pd
 
@@ -33,7 +33,7 @@ class Task(ABC):
         self.task_out: dict[str, Task] = {}
         self.output: pd.DataFrame | None = None
 
-        from src.pipeline import Pipeline
+        from src.workflows.pipeline import Pipeline
 
         if ctx := Pipeline.get_context():
             ctx.add_task(self)

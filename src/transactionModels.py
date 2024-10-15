@@ -1,4 +1,4 @@
-from src.task import Task
+from src.workflows.task import Task
 import pandas as pd
 from abc import abstractmethod
 from sklearn.metrics import mean_squared_error

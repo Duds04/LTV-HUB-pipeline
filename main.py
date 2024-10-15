@@ -1,4 +1,4 @@
-from src.pipeline import Pipeline
+from src.workflows.pipeline import Pipeline
 
 from src.dataBase import CsvReadTask
 from src.dataTransformation import RFMTask
@@ -6,9 +6,9 @@ from src.transactionModels import ParetoModelTask
 from src.transactionModels import BGFTask
 from src.monetaryModels import GammaGammaModelTask
 from src.genericModels import MachineLearningModel
+from src.ltv_model import LTVTask
 
 #  @classmethod --> não precisa passar a instancia não usa o self
-
 
 def pipeline_pareto():
     read_dt = CsvReadTask(
@@ -49,7 +49,6 @@ def pipeline_MLTrasaction():
     read_dt >> rfm_data >> ml_model_transaction
     
 
-
 def pipeline_MLMonetary():
     read_dt = CsvReadTask(
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
@@ -64,8 +63,11 @@ def pipeline_MLMonetary():
 
 def main():
     with Pipeline() as pipeline:
-       pipeline_MLMonetary()
-        
+        pipeline_pareto()
+        # pipeline_bgf()
+        # pipeline_gammmaGamma()
+        # pipeline_MLTrasaction()
+        # pipeline_MLMonetary()
 
     print(pipeline.run())
 

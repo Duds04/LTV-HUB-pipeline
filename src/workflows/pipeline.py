@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import deque
-from src.task import Task
+from src.workflows.task import Task
 from types import TracebackType
 import pandas as pd
 import threading
