@@ -66,8 +66,6 @@ class TransactionModelTask(Task):
         """
         pass
 
-    # TO DO: Esse método tá calculando errado
-
     @abstractmethod
     def rating(self, nameModel: str, df: pd.DataFrame, xExpected: str, xReal: str = 'frequency_holdout') -> pd.DataFrame:
         """
