@@ -1,6 +1,5 @@
-from src.workflows.task import Task
+
 import pandas as pd
-from abc import abstractmethod
 from sklearn.metrics import mean_squared_error
 
 import numpy as np
@@ -10,52 +9,8 @@ from sklearn.linear_model import ElasticNet, LassoCV
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import GradientBoostingRegressor, HistGradientBoostingRegressor, RandomForestRegressor
 
+from src.GenericModels.GenericModel import GenericModelTask
 
-# usados pelo Machine Learning (tem o Y independente)
-class GenericModelTask(Task):
-    def __init__(
-        self,
-        name: str,
-        target: str,
-        isTunning: bool = False,
-    ) -> None:
-        """
-        Args:
-            target: str, # Nome da coluna onde está o valor alvo (Y)
-            isTest = True # Caso seja para efetuar a predição em um dataset com ou sem o período de observação
-            isTunning = None # Fazer o Tunning de hyperparâmetros se for True
-        """
-        super().__init__(name)
-        self.target = target
-        self.isTunning = isTunning
-
-    @abstractmethod
-    def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
-        """
-            Dado um dataset com os valores de RFM, retorna a predição do número de transações esperadas
-        """
-        pass
-
-    @abstractmethod
-    def predict(self):
-        """
-            Dado um período, retorna o número de transações esperadas até ele
-        """
-        pass
-
-    @abstractmethod
-    def fit(self):
-        """
-            Treina o modelo com os dados passados
-        """
-        pass
-
-    @abstractmethod
-    def rating(self):
-        """
-            Retorna a classificação do modelo
-        """
-        pass
 
 
 class MachineLearningModel(GenericModelTask):
@@ -69,6 +24,7 @@ class MachineLearningModel(GenericModelTask):
         target: str,
         isTunning: bool = False,
         X_Colunms: list = None,
+        isTest: bool = True,
     ) -> None:
         """
         Args:
@@ -76,7 +32,7 @@ class MachineLearningModel(GenericModelTask):
             target, # Nome da coluna onde está o valor alvo (Y)
             isTunning, # Fazer o Tunning de hyperparâmetros se for True
         """
-        super().__init__(name, target, isTunning)
+        super().__init__(name, target, isTunning, isTest)
         self.models = self.createModels()
 
         self.bestModel = None
@@ -96,6 +52,9 @@ class MachineLearningModel(GenericModelTask):
             X.values, np.ravel(Y.values), random_state=42)
 
         self.bestModel = self.selectBestModel()
+        
+        if(self.isTest == False):
+            pass
 
         dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Colunms])
         
@@ -106,7 +65,6 @@ class MachineLearningModel(GenericModelTask):
             Seleciona o melhor modelo de acordo com o dataset passado
         """
         bestScore = None
-        print()
         for model in self.models:
             score = self.fitAndRating(model)
             if bestScore == None or bestScore > score[0]:

@@ -1,2 +1,4 @@
 /.vscode
 /.mypy_cache
+ambiente_exec/
+**/__pycache__/

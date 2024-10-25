@@ -9,25 +9,25 @@ class CsvReadTask(Task):
         fp: str,
         columnID: str = "id",
         columnDate: str = "dt",
-        columnVal: str = "val",
+        columnMonetary: str = "monetary",
     ) -> None:
         super().__init__(name)
         self.fp = Path(fp)
         self.columnID = columnID
         self.columnDate = columnDate
-        self.columnVal = columnVal
+        self.columnMonetary = columnMonetary
 
     def on_run(self) -> pd.DataFrame:
         df = pd.read_csv(self.fp)
         df.rename(
             columns={self.columnID: "id",
-                     self.columnDate: "dt", self.columnVal: "val"},
+                     self.columnDate: "dt", self.columnMonetary: "monetary"},
             inplace=True,
         )
 
         assert "id" in df.columns
         assert "dt" in df.columns
-        assert "val" in df.columns
+        assert "monetary" in df.columns
 
         if "dt" in df.columns:
             df["dt"] = pd.to_datetime(df["dt"])
