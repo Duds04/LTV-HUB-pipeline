@@ -8,16 +8,16 @@ class MonetaryModelTask(Task):
         self,
         name: str,
         isTunning: bool = False,
-        isTest: bool = True,
+        isTraining: bool = False,
     ) -> None:
         """
         Args:
-            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
         """
         super().__init__(name)
         self.model = None
         self.isTunning = isTunning
-        self.isTest = isTest
+        self.isTraining = isTraining
 
     @abstractmethod
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:

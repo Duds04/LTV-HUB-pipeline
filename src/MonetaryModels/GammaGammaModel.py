@@ -8,19 +8,19 @@ class GammaGammaModelTask(MonetaryModelTask):
         self,
         name: str,
         isTunning: bool = False,
-        isTest: bool = True,
+        isTraining: bool = False,
         penalizer: float = 0.1,
         isRating: bool = False
     ) -> None:
         """
         Args:
-            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             isTunning = None # Fazer o Tunning de hyperparâmetros se for True
             penalizer = 0.1 # Coeficiente de penalização usado pelo modelo
         """
-        super().__init__(name, isTunning, isTest)
+        super().__init__(name, isTunning, isTraining)
         self.penalizer = penalizer
-        self.isTest = isTest
+        self.isTraining = isTraining
         self.isRating = isRating
         self.model = self.createModel()
 
@@ -29,7 +29,7 @@ class GammaGammaModelTask(MonetaryModelTask):
         monetary = "monetary_value"
         frequency = "frequency"
 
-        if self.isTest:
+        if self.isTraining:
             monetary = "monetary_value_cal"
             frequency = "frequency_cal"
 
@@ -39,7 +39,7 @@ class GammaGammaModelTask(MonetaryModelTask):
 
         dfRFM['ExpectedGammaGamma'] = self.predict(dfRFM, monetary, frequency)
 
-        if (self.isTest and self.isRating):
+        if (self.isTraining and self.isRating):
             self.rating(dfRFM, frequency)
 
         return dfRFM

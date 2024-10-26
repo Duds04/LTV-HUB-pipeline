@@ -9,20 +9,20 @@ class TransactionModelTask(Task):
         self,
         name: str,
         grid=None,
-        isTest: bool = True,
+        isTraining: bool = False,
         numPeriods: float = 180,
     ) -> None:
         """
         Args:
             model #Modelo BG/NBD ou de Pareto esperado para realizar a predição
             rfm #Dataset já processado pelo RFM
-            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             grid = None #Caso não seja para fazer um grid search ele será None
         """
         super().__init__(name)
         self.model = None
         self.grid = grid
-        self.isTest = isTest
+        self.isTraining = isTraining
         self.numPeriods = numPeriods
 
     @abstractmethod
@@ -41,7 +41,7 @@ class TransactionModelTask(Task):
         """
             Dado um período, retorna o número de transações esperadas até ele
         """
-        if self.isTest:
+        if self.isTraining:
             # No período de Treino e no periodo de Validação
             return self.model.conditional_expected_number_of_purchases_up_to_time(
                 self.numPeriods,

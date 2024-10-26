@@ -6,7 +6,7 @@ class ParetoModelTask(TransactionModelTask):
     def __init__(
         self,
         name: str,
-        isTest: bool = True,
+        isTraining: bool = False,
         penalizer: float = 0.1,
         isRating: bool = False,
         numPeriods: int = 180,
@@ -14,12 +14,12 @@ class ParetoModelTask(TransactionModelTask):
         """
         Args:
             name, #Nome da tarefa
-            isTest = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             penalizer = 0.1# Coeficiente de penalização usado pelo modelo
         """
-        super().__init__(name,  isTest, numPeriods)
+        super().__init__(name,  isTraining, numPeriods)
         self.penalizer = penalizer
-        self.isTest = isTest
+        self.isTraining = isTraining
         self.isRating = isRating
         self.model = self.createModel()
 
@@ -27,7 +27,7 @@ class ParetoModelTask(TransactionModelTask):
         self.fit(dfRFM)
         dfRFM['ExpectedPareto'] = self.predict(dfRFM)
 
-        if(self.isTest and self.isRating):
+        if(self.isTraining and self.isRating):
             self.rating(dfRFM)
         # Real Expected --> na verdade isso é só a coluna frequency_holdout
         return dfRFM
@@ -44,7 +44,7 @@ class ParetoModelTask(TransactionModelTask):
         # cal --> X em momento de treino
         # holdout --> Y em momento de treino
         # sem nada é no momento de Teste, momento de previsão, final
-        if self.isTest:
+        if self.isTraining:
             self.model.fit(frequency=df['frequency_cal'],
                            recency=df['recency_cal'],
                            T=df['T_cal'])

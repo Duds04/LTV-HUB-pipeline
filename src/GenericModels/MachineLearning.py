@@ -24,7 +24,7 @@ class MachineLearningModel(GenericModelTask):
         target: str,
         isTunning: bool = False,
         X_Colunms: list = None,
-        isTest: bool = True,
+        isTest: bool = False,
     ) -> None:
         """
         Args:
@@ -45,6 +45,10 @@ class MachineLearningModel(GenericModelTask):
         self.Y_test = None
 
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        assert self.target in dfRFM.columns
+        for x_colum in self.X_Colunms:
+            assert x_colum in dfRFM.columns
+        
         X = dfRFM[self.X_Colunms]
         Y = dfRFM[self.target]
 
@@ -53,9 +57,6 @@ class MachineLearningModel(GenericModelTask):
 
         self.bestModel = self.selectBestModel()
         
-        if(self.isTest == False):
-            pass
-
         dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Colunms])
         
         return dfRFM

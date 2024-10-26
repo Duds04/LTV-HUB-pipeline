@@ -18,10 +18,11 @@ class RFMTask(Task):
         columnDate: str = "dt",
         columnMonetary: str = "monetary",
         frequency: str = "W",
-        calibrationEnd= None,
-        observationEnd= None,
+        calibrationEnd=None,
+        observationEnd=None,
         split: float = 0.8,
-        apply_calibration_split: bool = True,
+        isTraining: bool = False,
+        apply_calibration_split: bool = False,
     ) -> None:
         """
         Args:
@@ -36,6 +37,7 @@ class RFMTask(Task):
                 minTrainin: int, # Qual é o periodo mínimo que será usado para treino
                 maxTraining: int, # Qual será o último período que será usado para o treino
                 predictInterval: int = 4, # Define quantos períodos serão os intervalos de predição
+                apply_calibration_split # Fazer a divisão do dataFrame em calibration e holdout (se for Test isso ficara como true)
         """
         super().__init__(name)
         self.columnID = columnID
@@ -45,20 +47,21 @@ class RFMTask(Task):
         self.calibrationEnd = calibrationEnd
         self.observationEnd = observationEnd
         self.split = split
-        self.apply_calibration_split = apply_calibration_split
+        if(isTraining): self.apply_calibration_split = isTraining
+        else: self.apply_calibration_split = apply_calibration_split
         self.numPeriods = numPeriods
         self.minTrainin = minTrainin
         self.maxTraining = maxTraining
         self.predictInterval = predictInterval
-        
+
     def __getPeriodosList(self, df: pd.DataFrame):
         def __to_period(df: pd.DataFrame):
             return df.to_period(self.frequency)
-            
+
         df["period"] = df[self.columnDate].map(__to_period)
         df = df.sort_values(by='period')
         return df.period.unique()
-    
+
     def __getPeriodos(
         self, df: pd.DataFrame
     ):
@@ -103,12 +106,15 @@ class RFMTask(Task):
                     datetime_col=self.columnDate,
                     monetary_value_col=self.columnMonetary,
                     freq=self.frequency,
-                    calibration_period_end= calibrationEnd,
-                    observation_period_end= observationEnd,
+                    calibration_period_end=calibrationEnd,
+                    observation_period_end=observationEnd,
                 )
             return rfm_cal_holdout
 
     def on_run(self, df: pd.DataFrame) -> pd.DataFrame:
+        assert self.columnID in df.columns
+        assert self.columnMonetary in df.columns
+        assert self.columnDate in df.columns
         
         dfReturn = pd.DataFrame()
         if self.predictInterval == -1:

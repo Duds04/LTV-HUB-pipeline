@@ -9,18 +9,18 @@ class GenericModelTask(Task):
         name: str,
         target: str,
         isTunning: bool = False,
-        isTest: bool = True,
+        isTraining: bool = False,
     ) -> None:
         """
         Args:
             target: str, # Nome da coluna onde está o valor alvo (Y)
-            isTest = True # Caso seja para efetuar a predição em um dataset com ou sem o período de observação
+            isTraining = True # Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             isTunning = None # Fazer o Tunning de hyperparâmetros se for True
         """
         super().__init__(name)
         self.target = target
         self.isTunning = isTunning
-        self.isTest = isTest
+        self.isTraining = isTraining
 
     @abstractmethod
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
