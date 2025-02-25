@@ -1,4 +1,3 @@
-
 import pandas as pd
 from sklearn.metrics import mean_squared_error
 
@@ -11,8 +10,6 @@ from sklearn.ensemble import GradientBoostingRegressor, HistGradientBoostingRegr
 
 from src.GenericModels.GenericModel import GenericModelTask
 
-
-
 class MachineLearningModel(GenericModelTask):
     """
         Instância diversos modelos de Machine Learning para prever o target e pega o mais adequado
@@ -22,9 +19,9 @@ class MachineLearningModel(GenericModelTask):
         self,
         name: str,
         target: str,
+        X_Columns: list = None,
+        isTraining: bool = False,
         isTunning: bool = False,
-        X_Colunms: list = None,
-        isTest: bool = False,
     ) -> None:
         """
         Args:
@@ -32,12 +29,12 @@ class MachineLearningModel(GenericModelTask):
             target, # Nome da coluna onde está o valor alvo (Y)
             isTunning, # Fazer o Tunning de hyperparâmetros se for True
         """
-        super().__init__(name, target, isTunning, isTest)
+        super().__init__(name, target, isTunning, isTraining)
         self.models = self.createModels()
 
         self.bestModel = None
 
-        self.X_Colunms = X_Colunms
+        self.X_Columns = X_Columns
 
         self.X_train = None
         self.X_test = None
@@ -45,11 +42,13 @@ class MachineLearningModel(GenericModelTask):
         self.Y_test = None
 
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
+        print(dfRFM.columns, "\n\n", self.target)
+        
         assert self.target in dfRFM.columns
-        for x_colum in self.X_Colunms:
+        for x_colum in self.X_Columns:
             assert x_colum in dfRFM.columns
         
-        X = dfRFM[self.X_Colunms]
+        X = dfRFM[self.X_Columns]
         Y = dfRFM[self.target]
 
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(
@@ -57,7 +56,7 @@ class MachineLearningModel(GenericModelTask):
 
         self.bestModel = self.selectBestModel()
         
-        dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Colunms])
+        dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Columns])
         
         return dfRFM
 

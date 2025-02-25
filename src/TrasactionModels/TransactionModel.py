@@ -8,21 +8,22 @@ class TransactionModelTask(Task):
     def __init__(
         self,
         name: str,
-        grid=None,
         isTraining: bool = False,
-        numPeriods: float = 180,
+        penalizer: float = 0.1,
+        isRating: bool = False,
+        numPeriods: int = 180,
     ) -> None:
         """
         Args:
             model #Modelo BG/NBD ou de Pareto esperado para realizar a predição
             rfm #Dataset já processado pelo RFM
             isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
-            grid = None #Caso não seja para fazer um grid search ele será None
         """
         super().__init__(name)
         self.model = None
-        self.grid = grid
         self.isTraining = isTraining
+        self.penalizer = penalizer
+        self.isRating = isRating
         self.numPeriods = numPeriods
 
     @abstractmethod
@@ -71,4 +72,3 @@ class TransactionModelTask(Task):
         """
         print("Model ", nameModel, "Mean Squared Error:",
               mean_squared_error(df[xReal], df[xExpected]))
-        

@@ -17,10 +17,7 @@ class ParetoModelTask(TransactionModelTask):
             isTraining = True #Caso seja para efetuar a predição em um dataset com ou sem o período de observação
             penalizer = 0.1# Coeficiente de penalização usado pelo modelo
         """
-        super().__init__(name,  isTraining, numPeriods)
-        self.penalizer = penalizer
-        self.isTraining = isTraining
-        self.isRating = isRating
+        super().__init__(name,  isTraining, penalizer, isRating, numPeriods)
         self.model = self.createModel()
 
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
