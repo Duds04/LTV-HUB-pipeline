@@ -37,7 +37,7 @@ class GammaGammaModelTask(MonetaryModelTask):
 
         self.fit(dfRFM, monetary, frequency)
 
-        dfRFM['ExpectedGammaGamma'] = self.predict(dfRFM, monetary, frequency)
+        dfRFM['ExpectedMonetary'] = self.predict(dfRFM, monetary, frequency)
 
         if (self.isTraining and self.isRating):
             self.rating(dfRFM, frequency)
@@ -65,5 +65,5 @@ class GammaGammaModelTask(MonetaryModelTask):
         """
             Retorna a classificação do cliente
         """
-        xExpected = 'ExpectedGammaGamma'
+        xExpected = 'ExpectedMonetary'
         super().rating('GammaGamma', df, xExpected, xReal=frequency)

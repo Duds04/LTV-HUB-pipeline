@@ -56,7 +56,12 @@ class MachineLearningModel(GenericModelTask):
 
         self.bestModel = self.selectBestModel()
         
-        dfRFM['ExpectedML'] = self.bestModel.predict(dfRFM[self.X_Columns])
+        if "mon" in self.target.lower():
+            xExpected = "ExpectedMonetary"
+        else:
+            xExpected = "ExpectedFrequency"
+            
+        dfRFM['ExpectedFrequency'] = self.bestModel.predict(dfRFM[self.X_Columns])
         
         return dfRFM
 

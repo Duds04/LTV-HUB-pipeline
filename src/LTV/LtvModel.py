@@ -38,6 +38,8 @@ class LTVTask(Task):
         """
 
         factor = {"W": 4.345, "M": 1.0, "D": 30, "H": 30 * 24}[self.frequency]
+        
+        print("\n\n\n\n\n\n\n",df.columns,"\n\n\n\n\n\n\n")
 
         if self.isTraining:
             self.columnMonetary = "monetary_value_cal"

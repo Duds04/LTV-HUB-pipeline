@@ -22,7 +22,7 @@ class ParetoModelTask(TransactionModelTask):
 
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
         self.fit(dfRFM)
-        dfRFM['ExpectedPareto'] = self.predict(dfRFM)
+        dfRFM['ExpectedFrequency'] = self.predict(dfRFM)
 
         if(self.isTraining and self.isRating):
             self.rating(dfRFM)
@@ -56,7 +56,7 @@ class ParetoModelTask(TransactionModelTask):
         """
             Retorna a classificação do cliente
         """
-        xExpected = 'ExpectedPareto'
+        xExpected = 'ExpectedFrequency'
         super().rating('Pareto', df, xExpected)
 
     def predict(self, df: pd.DataFrame) -> pd.DataFrame:

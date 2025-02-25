@@ -22,7 +22,7 @@ class BGFModelTask(TransactionModelTask):
 
     def on_run(self, dfRFM: pd.DataFrame) -> pd.DataFrame:
         self.fit(dfRFM)
-        dfRFM['ExpectedBGF'] = self.predict(dfRFM)
+        dfRFM['ExpectedFrequency'] = self.predict(dfRFM)
         
         if (self.isTraining and  self.isRating):
             self.rating(dfRFM)
@@ -54,7 +54,7 @@ class BGFModelTask(TransactionModelTask):
         """
             Retorna a classificação do cliente
         """
-        xExpected = 'ExpectedBGF'
+        xExpected = 'ExpectedFrequency'
         super().rating('BG/NBD', df,  xExpected)
 
     def predict(self, df: pd.DataFrame) -> pd.DataFrame:

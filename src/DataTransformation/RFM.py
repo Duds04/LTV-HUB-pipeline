@@ -132,6 +132,5 @@ class RFMTask(Task):
                 self.observationEnd = periods[period + self.predictInterval].to_timestamp()
                 dfReturn = pd.concat([dfReturn, self.__rfm_data_filler(df)], ignore_index=True)
                 
-                              
         return dfReturn
            

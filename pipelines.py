@@ -9,8 +9,8 @@ from src.MonetaryModels.GammaGammaModel import GammaGammaModelTask
 from src.GenericModels.MachineLearning import MachineLearningModel
 from src.LTV.LtvModel import LTVTask
 
-from src.TrasactionModels.TransactionModelRunner import TransactionModelRunner, TransactionModelType
-from src.MonetaryModels.MonetaryModelRunner import MonetaryModelRunner, MonetaryModelType
+from src.TrasactionModels.TransactionModelRunner import TransactionModelRunner
+from src.MonetaryModels.MonetaryModelRunner import MonetaryModelRunner
 
 #  @classmethod --> não precisa passar a instancia não usa o self
 
@@ -47,8 +47,8 @@ def pipeline_bgf():
     read_dt = CsvReadTask(
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
     )
-    rfm_data = RFMTask("split_data", isTraining=True)
-    bgf_model = BGFModelTask("bgf_model", isRating=True, isTraining=True)
+    rfm_data = RFMTask("split_data")
+    bgf_model = BGFModelTask("bgf_model", isRating=True)
 
     read_dt >> rfm_data >> bgf_model
 
@@ -68,7 +68,7 @@ def pipeline_MLTrasaction():
     read_dt = CsvReadTask(
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
     )
-    rfm_data = RFMTask("split_data", isTraining=True)
+    rfm_data = RFMTask("split_data")
     ml_model_transaction = MachineLearningModel("machine_learning_model_transaction", "frequency_holdout", X_Columns=[
         'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'], isTraining=True)
 
@@ -97,6 +97,28 @@ def pipeline_MLMonetary_Enriquecido():
     read_dt >> rfm_data_enriquecido >> ml_model_monetary
 
 
+def pipeline_MLMonetary_NOT_Training():
+    read_dt = CsvReadTask(
+        "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
+    )
+    rfm_data = RFMTask("split_data")
+    ml_model_monetary = MachineLearningModel("machine_learning_monetary", "monetary_value", X_Columns=[
+                                             'frequency', 'recency', 'T', 'monetary_value'])
+
+    read_dt >> rfm_data >> ml_model_monetary
+
+
+def pipeline_MLTrasaction_NOT_Training():
+    read_dt = CsvReadTask(
+        "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
+    )
+    rfm_data = RFMTask("split_data")
+    ml_model_transaction = MachineLearningModel("machine_learning_model_transaction", "frequency", X_Columns=[
+                                                'frequency', 'recency', 'T', 'monetary_value'])
+
+    read_dt >> rfm_data >> ml_model_transaction
+
+
 def pipeline_pareto_CLV():
     read_dt = CsvReadTask(
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
@@ -104,7 +126,7 @@ def pipeline_pareto_CLV():
     rfm_data = RFMTask("split_data")
 
     pareto_model = ParetoModelTask("pareto_model", isRating=True)
-    ltv = LTVTask("calculo_ltv", columnFrequency="ExpectedPareto")
+    ltv = LTVTask("calculo_ltv", columnFrequency="ExpectedFrequency")
 
     read_dt >> rfm_data >> pareto_model >> ltv
 
@@ -118,16 +140,16 @@ def pipeline_gammaGamma_TEST_CLV():
     gammaGamma_model = GammaGammaModelTask(
         "gammaGamma_model", isRating=True, isTraining=True)
     ltv = LTVTask(
-        "calculo_ltv", columnFrequency="ExpectedPareto", isTraining=True)
+        "calculo_ltv", columnFrequency="ExpectedFrequency", isTraining=True)
 
     read_dt >> rfm_data >> gammaGamma_model >> ltv
 
 
 def pipeline_transaction():
     typeModels = {
-        "1": TransactionModelType.ParetoModel,
-        "2": TransactionModelType.MachineLearning,
-        "3": TransactionModelType.BGFModel,
+        "1": "ParetoModel",
+        "2": "MachineLearning",
+        "3": "BGFModel",
     }
 
     print("Escolha o modelo para executar:")
@@ -146,7 +168,7 @@ def pipeline_transaction():
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
     )
     rfm_data = RFMTask("split_data", isTraining=True)
-    if (typeModel == TransactionModelType.MachineLearning):
+    if (typeModel == "MachineLearning"):
         transaction_use = TransactionModelRunner("model", typeModel, isTraining=True, isRating=True, target="frequency_holdout", X_Columns=[
             'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
     else:
@@ -159,8 +181,8 @@ def pipeline_transaction():
 
 def pipeline_monetary():
     typeModels = {
-        "1": MonetaryModelType.GammaGammaModel,
-        "2": MonetaryModelType.MachineLearning,
+        "1": "GammaGammaModel",
+        "2": "MachineLearning",
     }
 
     print("Escolha o modelo para executar:")
@@ -179,7 +201,7 @@ def pipeline_monetary():
         "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
     )
     rfm_data = RFMTask("split_data", isTraining=True)
-    if (typeModel == MonetaryModelType.MachineLearning):
+    if (typeModel == "MachineLearning"):
         monetary_use = MonetaryModelRunner("model", typeModel, isTraining=True, isRating=True, target="frequency_holdout", X_Columns=[
                                            'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
     else:
@@ -191,42 +213,62 @@ def pipeline_monetary():
     read_dt >> rfm_data >> model
 
 
-def calculate_LTV(transactionModel: TransactionModelType, monetaryModel: MonetaryModelType):
+def calculate_LTV(transactionModel, monetaryModel, file_path="data/transactions.csv", columnID="customer_id", columnDate="date", columnMonetary="amount"):
     read_dt = CsvReadTask(
-        "read_dt", "data/transactions.csv", "customer_id", "date", "amount"
+        "read_dt", file_path, columnID, columnDate, columnMonetary
     )
-    rfm_data = RFMTask("split_data", isTraining=True)
+    rfm_data = RFMTask("split_data")
 
-    if transactionModel == TransactionModelType.MachineLearning:
-        transaction_use = TransactionModelRunner("transaction_model", transactionModel, isTraining=True, isRating=True, target="frequency_holdout", X_Columns=[
-            'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
-    else:
-        transaction_use = TransactionModelRunner(
-            "transaction_model", transactionModel, isTraining=True, isRating=True)
+    transaction_model = transactionModel.run()
+    monetary_model = monetaryModel.run()
 
-    if monetaryModel == MonetaryModelType.MachineLearning:
-        monetary_use = MonetaryModelRunner("monetary_model", monetaryModel, isTraining=True, isRating=True, target="frequency_holdout", X_Columns=[
-                                           'frequency_cal', 'recency_cal', 'T_cal', 'monetary_value_cal', 'duration_holdout'])
-    else:
-        monetary_use = MonetaryModelRunner(
-            "monetary_model", monetaryModel, isTraining=True, isRating=True)
-
-    transaction_model = transaction_use.run()
-    monetary_model = monetary_use.run()
-
-    ltv = LTVTask(
-        "calculo_ltv", columnFrequency="ExpectedFrequency", columnMonetary="ExpectedMonetary", isTraining=True)
+    ltv = LTVTask("calculo_ltv", columnFrequency="ExpectedFrequency", columnMonetary="ExpectedMonetary")
 
     # Lembrando (>> só associa, executa apenas apos rodar pipeline.run())
-    read_dt >> rfm_data >> transaction_model
+    # read_dt >> rfm_data >> transaction_model >> monetary_model >> ltv
+    read_dt >> rfm_data 
+    rfm_data >> transaction_model
     rfm_data >> monetary_model
-    transaction_model >> ltv
+    # transaction_model >> ltv
     monetary_model >> ltv
 
 
 def use_calculate():
-    calculate_LTV(TransactionModelType.ParetoModel,
-                  MonetaryModelType.GammaGammaModel)
+    data = {
+        'idColumn': 'customer_id',
+        'dateColumn': 'date',
+        'amountColumn': 'amount',
+        'frequencyModel': 'BGFModel',
+        'monetaryModel': 'GammaGammaModel',
+        'weeksAhead': 180
+    }   
+    csv_file_path = "data/transactions.csv"
+    print(csv_file_path, data['idColumn'], data['dateColumn'], data['amountColumn'],
+          data['weeksAhead'], data['frequencyModel'], data['monetaryModel'])
+
+    if data['frequencyModel'] == "MachineLearning":
+        transactionModel = TransactionModelRunner("transaction_model", "MachineLearning", isRating=True, target="frequency", X_Columns=[
+                                                  'frequency', 'recency', 'T', 'monetary_value'])
+    else:
+        transactionModel = TransactionModelRunner("transaction_model", data['frequencyModel'], isRating=True, numPeriods=data['weeksAhead'])
+
+    if data['monetaryModel'] == "MachineLearning":
+        monetaryModel = MonetaryModelRunner("monetary_model", "MachineLearning", isRating=True, target="monetary_value", X_Columns=[
+                                            'frequency', 'recency', 'T', 'monetary_value'])
+    else:
+        monetaryModel = MonetaryModelRunner(
+            "monetary_model", data['monetaryModel'], isRating=True)
+
+    print(transactionModel, monetaryModel)
+    calculate_LTV(transactionModel, monetaryModel, csv_file_path,
+                  data['idColumn'], data['dateColumn'], data['amountColumn'])
+
+
+""" Para adicionar um novo modelo é necessário:
+        Criar uma Task para aquele modelo (herdando da Task generica de seu tipo)
+        Adicionar os novos atributos necessários para se usar esse modelo no seu respectivo ModelRunner (TransactionModelRunner ou Monetary Model Runner)
+        Adicionar um novo if no método run de seu ModelRunner para associar o modelo a sua Task
+"""
 
 
 def main():
@@ -244,7 +286,9 @@ def main():
             "10": pipeline_gammaGamma_TEST_CLV,
             "11": pipeline_transaction,
             "12": pipeline_monetary,
-            "13": use_calculate
+            "13": use_calculate,
+            "14": pipeline_MLMonetary_NOT_Training,
+            "15": pipeline_MLTrasaction_NOT_Training
         }
 
         print("Escolha um pipeline para executar:")

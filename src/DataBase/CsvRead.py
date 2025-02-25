@@ -31,5 +31,7 @@ class CsvReadTask(Task):
 
         if "dt" in df.columns:
             df["dt"] = pd.to_datetime(df["dt"])
+            
+        print("HEAD", df.head(5))
 
         return df
